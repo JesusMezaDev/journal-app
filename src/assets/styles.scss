@@ -1,0 +1,29 @@
+$theme-colors: (
+  "primary":    #265774,
+  "secondary":  #6D859C,
+  "success":    #17AB32,
+  "info":       #01c4ff,
+  "warning":    #FFB025,
+  "danger":     #be0000,
+  "light":      #E5E3E3,
+  "dark":       #25292B
+);
+
+.btn-primary,
+.btn-secondary,
+.btn-warning,
+.btn-danger,
+.btn-success,
+.btn-dark {
+  --bs-btn-color: #FFF !important;
+}
+
+.btn:hover {
+  --bs-btn-hover-color: #FFF;
+}
+
+@import 'bootstrap/scss/bootstrap.scss';
+
+.pointer {
+  cursor: pointer;
+}
