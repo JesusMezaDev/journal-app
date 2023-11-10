@@ -1,4 +1,4 @@
-import type { RouteRecordRaw } from 'vue-router';
+import { useRoute, type RouteRecordRaw } from 'vue-router';
 
 const DaybookRouter: RouteRecordRaw = {
     path: '/daybook',
@@ -13,7 +13,7 @@ const DaybookRouter: RouteRecordRaw = {
         {
             path: ':id',
             name: 'entry',
-            props: true,
+            props: () => ({ id: useRoute().params.id }),
             component: () => import('@/modules/daybook/views/EntryView.vue')
         }
     ]

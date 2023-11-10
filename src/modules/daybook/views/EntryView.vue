@@ -1,9 +1,9 @@
 <template>
     <div class="entry-title d-flex justify-content-between p-2">
         <div>
-            <span class="text-success fs-3 fw-bold">18</span>
-            <span class="mx-1 fs-3">Noviembre</span>
-            <span class="mx-2 fs-4 fw-light">2023, Sábado</span>
+            <span class="text-success fs-3 fw-bold">{{ day }}</span>
+            <span class="mx-1 fs-3">{{ month }} {{ year }},</span>
+            <span class="mx-2 fs-4 fw-light">{{ weekDay }}</span>
         </div>
         <div>
             <button class="btn btn-danger mx-2 bi bi-trash">
@@ -16,7 +16,7 @@
     </div>
     <hr>
     <div class="d-flex flex-column px-3 h-75">
-        <textarea placeholder="¿Qué sucedió hoy?"></textarea>
+        <textarea placeholder="¿Qué sucedió hoy?" v-model="entryText"></textarea>
     </div>
     <Fab icon="bi-floppy" />
     <img
@@ -26,9 +26,49 @@
 </template>
 
 <script setup lang="ts">
-    import { defineAsyncComponent } from 'vue';
+    import { defineAsyncComponent, ref, watch, onMounted } from 'vue';
+    import { useRouter } from 'vue-router';
 
+    import { useDaybookStore } from '../stores/daybook';
+    import type { Entry } from '../interfaces/entry';
+    import { getYearMonthDay } from '../helpers/getYearMonthDay';
+
+    const router = useRouter();
+
+    const props = defineProps<{ id: string }>();
+
+    const daybookStore = useDaybookStore();
+    const entry = ref<Entry | undefined>(undefined);
+    const entryText = ref<string>('');
+    const { getEntryById } = daybookStore;
+    const year = ref<String>();
+    const month = ref<String>();
+    const weekDay = ref<String>();
+    const day = ref<String>();
+    
+    
     const Fab = defineAsyncComponent(() => import('../components/Fab.vue'));
+    
+    const loadEntry = () => {
+        entry.value = getEntryById(props.id);
+        
+        if (!entry.value) return router.push({ name: 'no-entry' });
+
+        entryText.value = entry.value?.text || '';
+        
+        const dateInfo = getYearMonthDay(entry.value?.date);
+        
+        year.value = dateInfo.year;
+        month.value = dateInfo.month;
+        weekDay.value = dateInfo.weekDay;
+        day.value = dateInfo.day;
+    }
+    
+    loadEntry();
+
+    watch(() => props.id, () => {
+        loadEntry();
+    });
 </script>
 
 <style lang="scss" scoped>
