@@ -24,6 +24,10 @@ $theme-colors: (
 
 @import 'bootstrap/scss/bootstrap.scss';
 
+.first-letter-capitalize {
+  text-transform: capitalize;
+}
+
 .pointer {
   cursor: pointer;
 }

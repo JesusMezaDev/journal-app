@@ -1,5 +1,5 @@
-export const getYearMonthDay = (date: Date | undefined) => {
-    if (!date) return { day: undefined, month: undefined, weekDay: undefined, year: undefined };
+export const getYearMonthDay = (date: Date | undefined | string) => {
+    if (!date || typeof date === 'string') return { day: undefined, month: undefined, weekDay: undefined, year: undefined };
 
     const month = date.toLocaleDateString('es-MX', { month: 'long' });
     const year = date.toLocaleDateString('es-MX', { year: 'numeric' });

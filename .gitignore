@@ -27,3 +27,7 @@ coverage
 *.sw?
 
 package-lock.json
+
+
+environments/*
+!environments/.env.template

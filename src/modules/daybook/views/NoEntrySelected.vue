@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-center">
         <h1 class="align-self-center">No se ha seleccionado un elemento</h1>
     </div>
-    <Fab />
+    <Fab @on:click="$router.push({ name: 'entry', params: { id: 'new' } })"/>
 </template>
 
 <script lang="ts" setup>

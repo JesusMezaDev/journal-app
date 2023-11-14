@@ -1,6 +1,7 @@
 export interface Entry {
     date: Date;
-    id: string;
+    id?: string;
     picture?: string;
     text: string;
+    updateDate?: Date;
 }

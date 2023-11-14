@@ -1,5 +1,5 @@
 <template>
-    <button class="btn fs-1" :class="classButton"></button>
+    <button class="btn fs-1" :class="classButton" @click="$emit('on:click')"></button>
 </template>
 
 <script setup lang="ts">

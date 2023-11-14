@@ -1,15 +1,16 @@
 <template>
-    <div class="entry-title d-flex justify-content-between p-2">
+    <div class="d-flex justify-content-between p-2">
         <div>
             <span class="text-success fs-3 fw-bold">{{ day }}</span>
-            <span class="mx-1 fs-3">{{ month }} {{ year }},</span>
-            <span class="mx-2 fs-4 fw-light">{{ weekDay }}</span>
+            <span class="first-letter-capitalize mx-1 fs-3">{{ month }} {{ year }},</span>
+            <span class="first-letter-capitalize mx-2 fs-4 fw-light">{{ weekDay }}</span>
         </div>
         <div>
-            <button class="btn btn-danger mx-2 bi bi-trash">
+            <input type="file" @change="onSelectedImage($event)" ref="imageSelector" v-show="false" accept="image/png, image/jpeg">
+            <button class="btn btn-danger mx-2 bi bi-trash" @click="confirmDeleteEntry">
                 Borrar
             </button>
-            <button class="btn btn-primary bi bi-upload">
+            <button class="btn btn-primary bi bi-upload" @click="onSelectImage">
                 Subir Foto
             </button>
         </div>
@@ -18,50 +19,127 @@
     <div class="d-flex flex-column px-3 h-75">
         <textarea placeholder="¿Qué sucedió hoy?" v-model="entryText"></textarea>
     </div>
-    <Fab icon="bi-floppy" />
-    <img
-        src="https://tv-azteca-brightspot.s3.amazonaws.com/d7/33/cc9abfe24152a3ff46e36487aea8/dragon-ball-en-azteca-7-estas-son-las-peliculas-que-podras-ver-en-junio.jpg"
-        alt="Gokú y su hijo Son Gohan surcando los cielos en la nube voladora"
+    <Fab icon="bi-floppy" @on:click="saveEntry"/>
+    <img v-if="!localImage && entry?.picture"
+        :src="entry.picture"
+        alt="Imagen cargada remotamente"
+        class="img-thumbnail">
+    <img v-if="localImage"
+        :src="localImage"
+        alt="Imagen cargada localmente"
         class="img-thumbnail">
 </template>
 
 <script setup lang="ts">
-    import { defineAsyncComponent, ref, watch, onMounted } from 'vue';
+    import { defineAsyncComponent, ref, watch } from 'vue';
     import { useRouter } from 'vue-router';
 
     import { useDaybookStore } from '../stores/daybook';
     import type { Entry } from '../interfaces/entry';
+    import { useDialog } from '@/shared/modules/dialog/composables';
+    
     import { getYearMonthDay } from '../helpers/getYearMonthDay';
+    import { uploadImage } from '../helpers/uploadImage';
 
     const router = useRouter();
-
     const props = defineProps<{ id: string }>();
-
-    const daybookStore = useDaybookStore();
-    const entry = ref<Entry | undefined>(undefined);
-    const entryText = ref<string>('');
-    const { getEntryById } = daybookStore;
-    const year = ref<String>();
-    const month = ref<String>();
-    const weekDay = ref<String>();
-    const day = ref<String>();
-    
     
     const Fab = defineAsyncComponent(() => import('../components/Fab.vue'));
+
+    const daybookStore = useDaybookStore();
+    const dialog = useDialog();
+    const entry = ref<Entry | undefined>(undefined);
+    const entryText = ref<string>('');
+    const { getEntryById, updateEntry, createEntry, deleteEntry } = daybookStore;
+    const year = ref<string>();
+    const month = ref<string>();
+    const weekDay = ref<string>();
+    const day = ref<string>();
+    const file = ref<File | null>(null);
+    const localImage = ref<string>();
+    const imageSelector = ref<HTMLInputElement | null>(null);
     
     const loadEntry = () => {
-        entry.value = getEntryById(props.id);
+        if (props.id === 'new') entry.value = { date: new Date(), text: '' };
+
+        if (props.id != 'new') entry.value = getEntryById(props.id);
         
         if (!entry.value) return router.push({ name: 'no-entry' });
 
         entryText.value = entry.value?.text || '';
         
-        const dateInfo = getYearMonthDay(entry.value?.date);
+        const dateInfo = getYearMonthDay(new Date(entry.value?.date));
         
-        year.value = dateInfo.year;
-        month.value = dateInfo.month;
-        weekDay.value = dateInfo.weekDay;
-        day.value = dateInfo.day;
+        year.value = dateInfo.year ?? '';
+        month.value = dateInfo.month ?? '';
+        weekDay.value = dateInfo.weekDay ?? '';
+        day.value = dateInfo.day ?? '';
+    }
+
+    const saveEntry = async () => {
+        const pictureUrl = await uploadImage(file.value as File);
+
+        entry.value!.text = entryText.value;
+        entry.value!.picture = pictureUrl;
+
+        if (props.id === 'new') {
+            await createEntry(entry.value as Entry);
+            // return router.push({ name: 'entry', params: { id: newEntry } });
+            return router.push({ name: 'no-entry' });
+        }
+
+        await updateEntry(entry.value as Entry);
+
+        file.value = null;
+    }
+
+    const confirmDeleteEntry = async () => {
+        if (props.id === 'new') return;
+
+        dialog.set({
+            dialogType: 'confirm',
+            message: '¿Estás seguro de eliminar esta entrada?',
+            onConfirmDialog: async () => await deleteEntry(props.id),
+            labelOkButton: 'Sí',
+            labelCancelButton: 'No'
+        });
+        dialog.show();
+    }
+
+    const onSelectedImage = (event: Event) => {
+        const input = event.target;
+        
+        if (!input) return;
+
+        if (!(input instanceof HTMLInputElement)) return;
+
+        const ext = input.value.split('.').pop()?.toLocaleLowerCase();
+
+        if (!['png', 'jpg', 'jpeg'].includes(ext ?? '---')) return;
+
+        if (!input.files) {
+            localImage.value = undefined;
+            return;
+        }
+
+        if (!input.files[0]) {
+            localImage.value = undefined;
+            return;
+        }
+
+        file.value = input.files[0];
+
+        const fileReader = new FileReader();
+        fileReader.onload = () => localImage.value = fileReader.result?.toString();
+        fileReader.readAsDataURL(file.value);
+    }
+
+    const onSelectImage = () => {
+        if (!imageSelector.value) return;
+
+        if (!(imageSelector.value instanceof HTMLInputElement)) return;
+
+        imageSelector.value.click();
     }
     
     loadEntry();
@@ -91,8 +169,4 @@
             outline: none;
         }
     }
-
-    // .entry-title {
-
-    // }
 </style>

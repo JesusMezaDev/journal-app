@@ -1,0 +1,1 @@
+export { useDialog } from '@/shared/modules/dialog/composables/useDialog';
