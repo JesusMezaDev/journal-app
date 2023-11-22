@@ -6,8 +6,6 @@ import { useJournalStore } from '@/stores/journal';
 
 import type { ResponseCloudinary } from '../interfaces/responseCloudinary';
 
-const { isLoading } = storeToRefs(useJournalStore());
-
 const handleError = (error: unknown) => {
     if (axios.isAxiosError(error)) {
         console.log('axiosError', error);
@@ -18,6 +16,8 @@ const handleError = (error: unknown) => {
 }
 
 export const uploadImage = async (file: File) => {
+    const { isLoading } = storeToRefs(useJournalStore());
+    
     if (!file) return;
 
     isLoading.value = true;
@@ -26,8 +26,6 @@ export const uploadImage = async (file: File) => {
         const formData = new FormData();
         formData.append('upload_preset', 'journal-app');
         formData.append('file', file);
-
-        // const url = 'https://api.cloudinary.com/v1_1/dkymbqnzs/image/upload';
 
         const { data, status, statusText } = await cloudinaryApi.post<ResponseCloudinary>('', formData);
 

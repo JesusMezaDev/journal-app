@@ -7,11 +7,8 @@
                 height="32">
             Daybook
         </a>
-
         <div class="d-flex">
-            <button class="btn btn-outline-info mx-2">
-                <i class="bi bi-box-arrow-right"></i>
-            </button>
+            <button class="btn btn-outline-info mx-2 bi-box-arrow-right"></button>
         </div>
     </nav>
 </template>
