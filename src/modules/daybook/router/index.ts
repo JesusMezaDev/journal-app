@@ -1,9 +1,12 @@
 import { useRoute, type RouteRecordRaw } from 'vue-router';
 
+import { isAuthenticatedGuard } from '@/modules/auth/guards/auth';
+
 const DaybookRouter: RouteRecordRaw = {
     path: '/daybook',
     name: 'daybook',
     component: () => import('@/modules/daybook/layouts/DayBookLayout.vue'),
+    beforeEnter: [isAuthenticatedGuard],
     children: [
         {
             path: '',
