@@ -13,19 +13,14 @@ export const useAuth = () => {
     const router = useRouter();
 
     const userForm = ref<UserRequest>({
-        name: 'Jesús Meza',
-        email: 'jame181185@gmail.com',
-        password: '123456',
+        name: '',
+        email: '',
+        password: '',
     });
-
-    // const createUser = async(user: { name: string, email: string, password: string }) => {
-    //     return await signUpUser(user);
-    // }
 
     return {
         userForm,
         onSubmit: async() => {
-            // const { ok, message } = await createUser(userForm.value);
             const { ok, message } = await signUpUser(userForm.value);
 
             if (!ok) {
