@@ -10,8 +10,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      // name: 'home',
+      // component: HomeView,
+      redirect: '/auth',
     },
     {
       ...DaybookRouter
