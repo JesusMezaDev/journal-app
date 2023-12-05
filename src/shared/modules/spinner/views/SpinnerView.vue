@@ -29,7 +29,7 @@
         transition: 200ms cubic-bezier(0, 0, 1, 1);
         transition-property: opacity, visibility;
         visibility: hidden;
-        z-index: 10;
+        z-index: 2;
     }
 
     .spinner.active {
