@@ -26,7 +26,6 @@
     "@vitejs/plugin-vue": "4.5.0",
     "@vue/test-utils": "2.4.3",
     "@vue/tsconfig": "0.4.0",
-    "cloudinary": "1.41.0",
     "jsdom": "23.0.1",
     "npm-run-all2": "6.1.1",
     "sass": "1.69.5",

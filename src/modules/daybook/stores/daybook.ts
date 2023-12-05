@@ -1,22 +1,21 @@
 import { ref } from 'vue';
 import { defineStore, storeToRefs } from 'pinia';
-import axios from 'axios';
-import { useRouter } from 'vue-router';
+import { isAxiosError } from 'axios';
 
 import type { Entry } from '../interfaces/entry';
 import { journalApi } from '@/api/journalApi';
 import { useJournalStore } from '@/stores/journal';
 import { useDialog } from '@/shared/modules/dialog/composables';
+import { deleteImage } from '../helpers/uploadImage';
 
 export const useDaybookStore = defineStore('daybook', () => {
     const { isLoading } = storeToRefs(useJournalStore());
     const searchTerm = ref<String>('');
     const entries = ref<Entry[]>([]);
     const dialog = useDialog();
-    const router = useRouter();
 
-    const handleError = (error: unknown) => {
-        if (axios.isAxiosError(error)) {
+    const handleError = (error: any) => {
+        if (isAxiosError(error)) {
             dialog.set({ dialogType: 'error', message: error.message });
             dialog.show();
             return;
@@ -48,7 +47,7 @@ export const useDaybookStore = defineStore('daybook', () => {
             isLoading.value = true;
 
             try {
-                const { data, status, statusText } = await journalApi.get('/entries.json');
+                const { data, statusText } = await journalApi.get('/entries.json');
             
                 if (statusText !== 'OK') return;
                 
@@ -80,11 +79,11 @@ export const useDaybookStore = defineStore('daybook', () => {
                 
                 const { id, ...rest } = entry;
 
-                const { data, statusText, status } = await journalApi.put(`/entries/${ id }.json`, rest);
+                const { data } = await journalApi.put(`/entries/${ id }.json`, rest);
 
                 const indexEntry = entries.value.findIndex(item => item.id === id);
                 
-                entries.value[indexEntry] = { ...data }; 
+                entries.value[indexEntry] = { id, ...data }; 
                 
                 dialog.set({ dialogType: 'success', message: 'La entrada fue actualizada correctamente.' });
                 dialog.show();
@@ -108,8 +107,6 @@ export const useDaybookStore = defineStore('daybook', () => {
 
                 entries.value.unshift(newEntry);
 
-                // return data.name;
-
                 dialog.set({ dialogType: 'success', message: 'La entrada fue creada correctamente.' });
                 dialog.show();
             } catch (error) {
@@ -121,8 +118,11 @@ export const useDaybookStore = defineStore('daybook', () => {
         },
         deleteEntry: async (id: string) => {
             isLoading.value = true;
-
+            
             try {
+                const entry = entries.value.find(item => item.id === id);
+                await deleteImage(entry?.picture || '');
+
                 const { statusText, status } = await journalApi.delete(`/entries/${ id }.json`);
 
                 if (statusText !== 'OK') return;
@@ -131,8 +131,6 @@ export const useDaybookStore = defineStore('daybook', () => {
                 
                 entries.value.splice(indexEntry, 1);
                 
-                router.push({ name: 'no-entry' });
-
                 dialog.set({ dialogType: 'success', message: 'La entrada fue borrada correctamente.'});
                 dialog.show();
             } catch (error) {

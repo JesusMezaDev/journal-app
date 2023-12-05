@@ -39,7 +39,7 @@
     import { useDialog } from '@/shared/modules/dialog/composables';
     
     import { getYearMonthDay } from '../helpers/getYearMonthDay';
-    import { uploadImage } from '../helpers/uploadImage';
+    import { deleteImage, uploadImage } from '../helpers/uploadImage';
 
     const router = useRouter();
     const props = defineProps<{ id: string }>();
@@ -77,10 +77,13 @@
     }
 
     const saveEntry = async () => {
-        const pictureUrl = await uploadImage(file.value as File);
+        if (file.value && entry.value!.picture) {
+            await deleteImage(entry.value!.picture.trim())
+        }
+        
+        if (file.value) entry.value!.picture = await uploadImage(file.value as File);
 
         entry.value!.text = entryText.value;
-        entry.value!.picture = pictureUrl;
 
         if (props.id === 'new') {
             await createEntry(entry.value as Entry);
@@ -91,6 +94,7 @@
         await updateEntry(entry.value as Entry);
 
         file.value = null;
+        localImage.value = undefined;
     }
 
     const confirmDeleteEntry = async () => {
@@ -99,7 +103,10 @@
         dialog.set({
             dialogType: 'confirm',
             message: '¿Estás seguro de eliminar esta entrada?',
-            onConfirmDialog: async () => await deleteEntry(props.id),
+            onConfirmDialog: async () => {
+                await deleteEntry(props.id);
+                router.push({ name: 'daybook' });
+            },
             labelOkButton: 'Sí',
             labelCancelButton: 'No'
         });
@@ -112,7 +119,7 @@
         if (!input) return;
 
         if (!(input instanceof HTMLInputElement)) return;
-
+        
         const ext = input.value.split('.').pop()?.toLocaleLowerCase();
 
         if (!['png', 'jpg', 'jpeg'].includes(ext ?? '---')) return;

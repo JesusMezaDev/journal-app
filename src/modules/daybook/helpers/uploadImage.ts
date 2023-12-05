@@ -1,10 +1,10 @@
 import { storeToRefs } from 'pinia';
 import axios from 'axios';
 
-import { cloudinaryApi } from '@/api/cloudinaryApi';
 import { useJournalStore } from '@/stores/journal';
 
 import type { ResponseCloudinary } from '../interfaces/responseCloudinary';
+import { myApiCloudinary } from '@/api/myApiCloudinary';
 
 const handleError = (error: unknown) => {
     if (axios.isAxiosError(error)) {
@@ -26,14 +26,30 @@ export const uploadImage = async (file: File) => {
         const formData = new FormData();
         formData.append('upload_preset', 'journal-app');
         formData.append('file', file);
+        const { data } = await myApiCloudinary.post<ResponseCloudinary>('/cloudinary', formData);
+        return data.secure_url;
+    } catch (error) {
+        handleError(error);
+    }
+    finally {
+        isLoading.value = false;
+    }
+}
 
-        const { data, status, statusText } = await cloudinaryApi.post<ResponseCloudinary>('', formData);
+export const deleteImage = async (url: string) => {
+    if (!url) return;
 
-        if (statusText != 'OK') return;
+    const { isLoading } = storeToRefs(useJournalStore());
 
-        const { secure_url } = data;
+    isLoading.value = true;
+
+    const pictureFile = url.split('/').pop();
+    const [pictureId, ] = pictureFile!.split('.');
+
+    try {
+        const { data } = await myApiCloudinary.delete(`/cloudinary/${ pictureId }`);
         
-        return secure_url;
+        if (!data.ok) throw new Error('Oops! algo salió mal, intente de nuevo más tarde.');
     } catch (error) {
         handleError(error);
     }
