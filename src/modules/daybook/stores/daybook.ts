@@ -43,11 +43,11 @@ export const useDaybookStore = defineStore('daybook', () => {
         },
 
         /* Methods */
-        loadEntries: async () => {
+        loadEntries: async (userId: string) => {
             isLoading.value = true;
 
             try {
-                const { data, statusText } = await journalApi.get('/entries.json');
+                const { data, statusText } = await journalApi.get(`/entries.json?orderBy="userId"&equalTo="${ userId }"`);
             
                 if (statusText !== 'OK') return;
                 

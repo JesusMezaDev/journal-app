@@ -4,4 +4,5 @@ export interface Entry {
     picture?: string;
     text: string;
     updateDate?: Date;
+    userId: string;
 }

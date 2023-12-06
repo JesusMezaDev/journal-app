@@ -7,8 +7,12 @@ import { authStatus } from '../enums/auth';
 import { authApi } from '@/api/authApi';
 
 import type { User } from '../interfaces/user';
+import type { ResponseLogin } from '../interfaces/responseLogin';
 import type { UserInfo } from '../interfaces/userInfo';
+
 import { useDaybookStore } from '../../daybook/stores/daybook';
+import type { ResponseLookup } from '../interfaces/responseLookup';
+import type { ResponseRegister } from '../interfaces/responseRegister';
 
 const handlingError = (error: unknown) => {
     if (!isAxiosError(error)) return { ok: false, message: 'Opps! Hubo un error, por favor intente más tarde.' };
@@ -30,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
     const refreshToken = ref<string>();
     const status = ref<authStatus>(authStatus.authenticating);
     const user = ref<User>();
+    const userLogged = ref<UserInfo>();
 
     const loginUser = (userInfo: UserInfo) => {
         if (!idToken) return;
@@ -41,6 +46,7 @@ export const useAuthStore = defineStore('auth', () => {
         refreshToken.value = userInfo.refreshToken;
 
         user.value = userInfo.user;
+        userLogged.value = { ...userInfo };
         status.value = authStatus.authenticated;
     }
     
@@ -60,13 +66,13 @@ export const useAuthStore = defineStore('auth', () => {
         const { name, email, password } = user;
 
         try {
-            const { data } = await authApi.post(':signUp', { email, password, returnSecureToken: true });
-            const { idToken, refreshToken } = data;
+            const { data } = await authApi.post<ResponseRegister>(':signUp', { email, password, returnSecureToken: true });
+            const { idToken, refreshToken, localId } = data;
 
             await authApi.post(':update', { displayName: name, idToken });
             
 
-            loginUser({ user: { name, email }, idToken, refreshToken });
+            loginUser({ user: { name, email }, idToken, refreshToken, userId: localId });
 
             return { ok: true, message: null };
         } catch (error) {
@@ -83,10 +89,10 @@ export const useAuthStore = defineStore('auth', () => {
         const { email, password } = user;
 
         try {
-            const { data } = await authApi.post(':signInWithPassword', { email, password, returnSecureToken: true });
-            const { displayName, idToken, refreshToken } = data;
+            const { data } = await authApi.post<ResponseLogin>(':signInWithPassword', { email, password, returnSecureToken: true });
+            const { displayName, idToken, refreshToken, localId } = data;
 
-            loginUser({ user: { name: displayName, email }, idToken, refreshToken });
+            loginUser({ user: { name: displayName, email }, idToken, refreshToken, userId: localId});
 
             return { ok: true, message: null };
         } catch (error) {
@@ -114,11 +120,11 @@ export const useAuthStore = defineStore('auth', () => {
         isLoading.value = true;
 
         try {
-            const { data } = await authApi.post(':lookup', { idToken });
+            const { data } = await authApi.post<ResponseLookup>(':lookup', { idToken });
             const [userResponse] = data.users;
-            const { displayName, email } = userResponse;
+            const { displayName, email, localId } = userResponse;
             const user: User = { name: displayName, email };
-            loginUser({ user, idToken, refreshToken });
+            loginUser({ user, idToken, refreshToken, userId: localId });
             return { ok: true, message: null };
         } catch (error) {
             logoutUser();
@@ -138,5 +144,6 @@ export const useAuthStore = defineStore('auth', () => {
         signUpUser,
         status,
         user,
+        userLogged,
     }
 });

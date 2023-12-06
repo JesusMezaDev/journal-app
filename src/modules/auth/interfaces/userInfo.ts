@@ -4,4 +4,5 @@ export interface UserInfo {
     user: User;
     idToken: string;
     refreshToken: string;
+    userId: string;
 }

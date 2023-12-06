@@ -32,9 +32,11 @@
 
 <script setup lang="ts">
     import { defineAsyncComponent, ref, watch } from 'vue';
+    import { storeToRefs } from 'pinia';
     import { useRouter } from 'vue-router';
 
     import { useDaybookStore } from '../stores/daybook';
+    import { useAuthStore } from '@/modules/auth/stores/auth';
     import type { Entry } from '../interfaces/entry';
     import { useDialog } from '@/shared/modules/dialog/composables';
     
@@ -47,10 +49,12 @@
     const Fab = defineAsyncComponent(() => import('../components/Fab.vue'));
 
     const daybookStore = useDaybookStore();
+    const authStore = useAuthStore();
     const dialog = useDialog();
     const entry = ref<Entry | undefined>(undefined);
     const entryText = ref<string>('');
     const { getEntryById, updateEntry, createEntry, deleteEntry } = daybookStore;
+    const { userLogged } = storeToRefs(authStore);
     const year = ref<string>();
     const month = ref<string>();
     const weekDay = ref<string>();
@@ -60,7 +64,7 @@
     const imageSelector = ref<HTMLInputElement | null>(null);
     
     const loadEntry = () => {
-        if (props.id === 'new') entry.value = { date: new Date(), text: '' };
+        if (props.id === 'new') entry.value = { date: new Date(), text: '', userId: userLogged.value!.userId };
 
         if (props.id != 'new') entry.value = getEntryById(props.id);
         
@@ -84,6 +88,7 @@
         if (file.value) entry.value!.picture = await uploadImage(file.value as File);
 
         entry.value!.text = entryText.value;
+        entry.value!.userId = userLogged.value!.userId
 
         if (props.id === 'new') {
             await createEntry(entry.value as Entry);
